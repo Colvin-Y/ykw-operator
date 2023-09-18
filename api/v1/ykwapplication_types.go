@@ -17,6 +17,7 @@ limitations under the License.
 package v1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -25,11 +26,8 @@ import (
 
 // YkwApplicationSpec defines the desired state of YkwApplication
 type YkwApplicationSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of YkwApplication. Edit ykwapplication_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	Replicas int32                  `json:"replicas,omitempty"`
+	Template corev1.PodTemplateSpec `json:"template,omitempty"`
 }
 
 // YkwApplicationStatus defines the observed state of YkwApplication
