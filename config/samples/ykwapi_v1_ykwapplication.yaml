@@ -1,0 +1,12 @@
+apiVersion: ykwapi.cn.hrimfaxi/v1
+kind: YkwApplication
+metadata:
+  labels:
+    app.kubernetes.io/name: ykwapplication
+    app.kubernetes.io/instance: ykwapplication-sample
+    app.kubernetes.io/part-of: ykw-operator
+    app.kubernetes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: ykw-operator
+  name: ykwapplication-sample
+spec:
+  # TODO(user): Add fields here
