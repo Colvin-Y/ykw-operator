@@ -18,7 +18,12 @@ package controller
 
 import (
 	"context"
+	"fmt"
+	"time"
 
+	corev1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/errors"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -47,10 +52,40 @@ type YkwApplicationReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.16.0/pkg/reconcile
 func (r *YkwApplicationReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	l := log.FromContext(ctx)
 
-	// TODO(user): your logic here
+	// get YkwApplication
+	app := &ykwapiv1.YkwApplication{}
+	if err := r.Get(ctx, req.NamespacedName, app); err != nil {
+		if errors.IsNotFound(err) {
+			l.Info("this resource(YkwApplication) is not found")
 
+			// 这个资源被删了，那么就可以不再关注它了
+			return ctrl.Result{}, nil
+		}
+		l.Error(err, "failed to get YkwApplication")
+		// 20s 一个轮回
+		return ctrl.Result{RequeueAfter: 20 * time.Second}, err
+	}
+
+	// create pods
+	for i := 0; i < int(app.Spec.Replicas); i++ {
+		pod := &corev1.Pod{
+			ObjectMeta: metav1.ObjectMeta{
+				Name:        fmt.Sprintf("%s-%d", app.Name, i),
+				Namespace:   app.Namespace,
+				Labels:      app.Labels,
+				Annotations: app.Annotations,
+			},
+			Spec: app.Spec.Template.Spec,
+		}
+		if err := r.Create(ctx, pod); err != nil {
+			l.Error(err, fmt.Sprintf("failed to create pod[%s]", pod.Name))
+			return ctrl.Result{RequeueAfter: 20 * time.Second}, err
+		}
+		l.Info(fmt.Sprintf("create pod[%s] success", pod.Name))
+	}
+	l.Info("all pods has created")
 	return ctrl.Result{}, nil
 }
 
